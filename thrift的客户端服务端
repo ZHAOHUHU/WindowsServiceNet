@@ -1,0 +1,53 @@
+public class DBServer {
+
+	private static final int port = 10745;
+	//private static final int clientTimeout = null;
+	@SuppressWarnings("resource")
+	public static void main(String[] args) {
+		System.out.println("action.......");
+		  try {
+	            TNonblockingServerSocket serverTransport = new TNonblockingServerSocket(port);
+	            // 设置协议工厂为 TBinaryProtocol.Factory
+	            // 关联处理器与 Hello 服务的实现
+	            TProcessor tprocessor = new DbService.Processor(new DBimp());
+	            //异步IO，需要使用TFramedTransport，它将分块缓存读取。
+	            TNonblockingServer.Args tArgs = new TNonblockingServer.Args(serverTransport);
+	            tArgs.processor(tprocessor);
+	            tArgs.transportFactory(new TFramedTransport.Factory());
+	            //使用二进制协议
+	            tArgs.protocolFactory(new TBinaryProtocol.Factory());
+	            //线程池服务模型，使用标准的阻塞式IO，预先创建一组线程处理请求。
+	            TServer server =new TNonblockingServer(tArgs);
+	            System.out.println("Start server on "+port);
+	            server.serve();
+	        } catch (TTransportException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
+  =================================================================================================================================
+  public class dbClient {
+	public static void main(String[] args) {
+		 try {
+	           //设置传输通道，对于非阻塞服务，需要使用TFramedTransport，它将数据分块发送
+	            TTransport transport = new TFramedTransport(new TSocket("192.168.12.15", 10745));
+	            transport.open();
+	            // 协议要和服务端一致
+	            //HelloTNonblockingServer
+	            ////使用高密度二进制协议
+	            TProtocol protocol = new TBinaryProtocol(transport);
+	            DbService.Client client = new DbService.Client(protocol);
+	            // 调用服务的方法
+	            String sql2 = "select * from user";
+				List<String> string = client.queryObject(sql2);
+				System.out.println(string);
+	            transport.close();
+	        } catch (TTransportException e) {
+	            e.printStackTrace();
+	        } catch (TException e) {
+	            e.printStackTrace();
+	        }
+	    }
+}
+
+  
